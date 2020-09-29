@@ -19,8 +19,6 @@ async fn get_hero(req: web::Path<GetHero>, d: web::Data<Pool>) -> Result<HttpRes
         .map_err(|e| {
             eprintln!("Error getting user: {}", e);
 
-
-
             error::ErrorInternalServerError(e)
         })
         .map(|h| match h {
