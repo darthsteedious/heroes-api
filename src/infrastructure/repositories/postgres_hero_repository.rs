@@ -56,10 +56,10 @@ impl HeroRepository for PostgresHeroRepository {
         from hero h
         join hero_class hc on h.hero_class_id = hc.hero_class_id
         where h.hero_id = $1";
-        let result = client.query_one(q,
-                                      &[
-                                          &id
-                                      ]).await
+        let params = &[&id];
+        let result = client
+            .query_one(q, params)
+            .await
             .map_or_else(|e| {
                 if format!("{}", e) == "query returned an unexpected number of rows" {
                     Ok(None)
@@ -69,13 +69,13 @@ impl HeroRepository for PostgresHeroRepository {
             }, |v| Ok(Some(v)))?;
 
         match result {
-            Some(row) =>  {
+            Some(row) => {
                 let class: String = row.get(2);
 
                 let dto = HeroDto::new_data(row.get(0), row.get(1), class.into());
 
                 Ok(Some(Hero::new(dto)))
-            },
+            }
             None => Ok(None)
         }
     }
@@ -86,7 +86,7 @@ impl HeroRepository for PostgresHeroRepository {
         let class: String = hero.class().into();
 
         let class_id: i32 = client.query_one("select hero_class_id from hero_class where name = $1",
-                                        &[&class])
+                                             &[&class])
             .await?
             .get(0);
 
