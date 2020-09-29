@@ -1,12 +1,15 @@
+pub mod repository;
+mod stats;
+pub mod errors;
+
 use serde::{Serialize, Deserialize};
 use serde::export::PhantomData;
 use super::Result;
-
-pub mod repository;
-mod stats;
+use errors::AlreadyAssignedError;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum HeroClass {
+    None,
     Archer,
     Warrior,
     Wizard,
@@ -18,7 +21,7 @@ impl From<String> for HeroClass {
             "Archer" => HeroClass::Archer,
             "Warrior" => HeroClass::Warrior,
             "Wizard" => HeroClass::Wizard,
-            _ => panic!("Invalid hero class type")
+            _ => HeroClass::None
         }
     }
 }
@@ -28,7 +31,8 @@ impl From<&HeroClass> for String {
         match c {
             &HeroClass::Archer => String::from("Archer"),
             &HeroClass::Warrior => String::from("Warrior"),
-            &HeroClass::Wizard => String::from("Wizard")
+            &HeroClass::Wizard => String::from("Wizard"),
+            &HeroClass::None => String::from("None")
         }
     }
 }
@@ -37,7 +41,7 @@ impl From<&HeroClass> for String {
 
 impl Default for HeroClass {
     fn default() -> Self {
-        HeroClass::Warrior
+        HeroClass::None
     }
 }
 
@@ -89,14 +93,56 @@ impl<'a> Hero<'a> {
         }
     }
 
+    pub fn create() -> Self {
+        Hero {
+            state: HeroDto::new(),
+            original: HeroDto::new(),
+            unused: PhantomData::default()
+        }
+    }
+
     pub fn name(&'a self) -> &'a str {
         &self.state.name
     }
 
+    pub fn assign_name(&mut self, name: &str) -> Result<()> {
+        let state = &mut self.state;
+
+        if &state.name == &String::default() {
+            state.name = String::from(name);
+            Ok(())
+        } else {
+            Err(AlreadyAssignedError::boxed("name"))
+        }
+    }
+
     pub fn class(&'a self) -> &'a HeroClass { &self.state.class }
 
-    pub fn dto(&'a self) -> HeroDto {
+    pub fn assign_class(&mut self, class: &HeroClass) -> Result<()> {
+        let state = &mut self.state;
+
+        let is_assigned = match state.class {
+            HeroClass::None => false,
+            _ => true
+        };
+
+        if !is_assigned  {
+            state.class = class.clone();
+            Ok(())
+        } else {
+            Err(AlreadyAssignedError::boxed("class"))
+        }
+    }
+
+    pub fn dto(&self) -> HeroDto {
         HeroDto::from(&self.state)
+    }
+
+    pub fn apply_dto(hero: &mut Hero<'a>, dto: &HeroDto) -> Result<()> {
+        hero.assign_name(&dto.name)?;
+        hero.assign_class(&dto.class)?;
+
+        Ok(())
     }
 }
 
