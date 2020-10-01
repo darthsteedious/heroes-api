@@ -3,7 +3,7 @@ use deadpool_postgres::Pool;
 use serde::Deserialize;
 use crate::domain::hero::repository::HeroRepository;
 use crate::infrastructure::repositories::create_hero_repository;
-use crate::domain::hero::{HeroDto, Hero, errors::HeroNotFound};
+use crate::domain::hero::{HeroDto, Hero};
 
 #[derive(Debug, Deserialize)]
 struct GetHero {
