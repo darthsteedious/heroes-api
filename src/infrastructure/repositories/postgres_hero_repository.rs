@@ -46,7 +46,6 @@ impl HeroRepository for PostgresHeroRepository {
         select h.hero_id,
             h.name
         from hero h
-        join hero_class hc on h.hero_class_id = hc.hero_class_id
         where h.hero_id = $1";
         let result = client
             .query_one(q, &[ &id ])
@@ -70,6 +69,12 @@ impl HeroRepository for PostgresHeroRepository {
     }
 
     async fn save_hero(&self, hero: &Hero) -> Result<i32> {
+        if !hero.is_modified() {
+            let state = &hero.state;
+
+            return Ok(state.id)
+        }
+
         let client = self.get_client().await?;
 
         let q = "

@@ -5,6 +5,7 @@ pub mod errors;
 use serde::{Serialize, Deserialize};
 use super::Result;
 use errors::AlreadyAssignedError;
+use std::cmp::{PartialEq, Eq};
 
 #[derive(Serialize, Deserialize)]
 pub struct HeroDto {
@@ -26,6 +27,20 @@ impl HeroDto {
             name,
         }
     }
+}
+
+impl PartialEq for HeroDto {
+    fn eq(&self, other: &Self) -> bool {
+        &self.name == &other.name
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        &self.name != &other.name
+    }
+}
+
+impl Eq for HeroDto {
+
 }
 
 impl From<&HeroDto> for HeroDto {
@@ -64,6 +79,10 @@ impl Hero {
     pub fn assign_name(&mut self, name: &str) -> Result<()> {
         let state = &mut self.state;
 
+        if &state.name == name {
+            return Ok(())
+        }
+
         if &state.name == &String::default() {
             state.name = String::from(name);
             Ok(())
@@ -80,6 +99,10 @@ impl Hero {
         hero.assign_name(&dto.name)?;
 
         Ok(())
+    }
+
+    pub fn is_modified(&self) -> bool {
+        &self.state != &self.original
     }
 }
 
